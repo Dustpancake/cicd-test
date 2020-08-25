@@ -20,7 +20,6 @@ pipeline {
                 }
             }
             steps {
-                sh 'pip3 install pytest'
                 sh 'pytest --junit-xml reports/results.xml src/test_calc.py'
             }
             post {
