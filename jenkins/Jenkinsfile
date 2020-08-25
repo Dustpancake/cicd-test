@@ -1,59 +1,32 @@
 pipeline {
-    agent { docker { image 'python:3.5.1' } }
-
-    environment {
-        SOME_VARIABLE = 'true'
-    }
+    agent none
 
     stages {
         stage('build') {
+            agent {
+                docker {
+                    image 'python:3-alpine'
+                }
+            }
             steps {
-                sh 'python --version'
-                echo 'build complete'
+                sh 'python -m py_compile src/addvals.py src/calc.py'
+                stash(name: 'compiled-results', includes: 'src/*.py*')
             }
         }
         stage('test') {
+            agent {
+                docker {
+                    image 'python:3-alpine'
+                }
             steps {
-                sh 'python myscript.py 1'
+                sh 'pip3 install pytest'
+                sh 'pytest --junit-xml reports/results.xml src/test_calc.py'
             }
-        }
-        stage('deploy - staging') {
-            steps {
-                echo "staging"
+            post {
+                always {
+                    junit 'reports/results.xml'
+                }
             }
-        }
-
-        stage('sanity check') {
-            steps {
-                input "final check:"
-            }
-        }
-
-        stage('deploy - production') {
-            steps {
-                echo "production"
-            }
-        }
-    }
-    post {
-        always {
-            echo 'This will always run'
-            deleteDir() /* clean up workspace */
-        }
-        success {
-            echo 'This will run only if successful'
-        }
-        failure {
-            mail to: 'fergusb.temp@gmail.com',
-                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "Something is wrong with ${env.BUILD_URL}"
-        }
-        unstable {
-            echo 'This will run only if the run was marked as unstable'
-        }
-        changed {
-            echo 'This will run only if the state of the Pipeline has changed'
-            echo 'For example, if the Pipeline was previously failing but is now successful'
         }
     }
 }
