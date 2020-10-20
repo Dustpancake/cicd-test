@@ -22,3 +22,4 @@ def addn(*args):
 if __name__ == '__main__':
 	print(addn("hello", "world"))
 	print(addn("hello", 1))
+	print("Something Else")
